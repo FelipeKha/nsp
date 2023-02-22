@@ -1,0 +1,10 @@
+# Files
+.DS_Store
+playground.ipynb
+
+# Folders
+research
+ts_and_strat_oscil
+
+# Environments
+venv_nsp
