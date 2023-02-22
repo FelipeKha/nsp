@@ -26,12 +26,29 @@ if __name__ == '__main__':
         nb_iter,
         tabu_limit,
     )
-    
+
     solution, solution_cost, states = tabu_search.search_solution()
-    
+
+    # validate solution
+    validation = Validation(
+        nb_nurses,
+        nb_work_days_per_week,
+        nb_shifts_per_work_day,
+        nb_nrs_per_shift,
+        nrs_max_work_days_per_week,
+    )
+
+    validation_object, overall_validation = validation.validate_solution(
+        solution,
+        solution_cost,
+        states,
+    )
+
     # print results
     print('solution:', solution)
     print('solution_cost:', solution_cost)
+    print('solution has been validated:', overall_validation)
+    print('validation object:', validation_object)
 
     plt.plot(states)
     plt.xlabel('nb iterations')
