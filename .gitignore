@@ -3,6 +3,7 @@
 playground.ipynb
 
 # Folders
+__pycache__/
 research
 ts_and_strat_oscil
 
