@@ -1,5 +1,8 @@
 import numpy as np
 
+from utils.covering_cost import CoveringCost
+from utils.get_population import GetPopulation
+
 
 class TabuSearch:
     def __init__(
@@ -11,7 +14,9 @@ class TabuSearch:
         nrs_max_work_days_per_week: int,
         nb_iter: int,
         tabu_limit: int,
-    ):
+        get_population: GetPopulation,
+        covering_cost: CoveringCost,
+    ) -> None:
         self.nb_nurses = nb_nurses
         self.nb_work_days_per_week = nb_work_days_per_week
         self.nb_shifts_per_work_day = nb_shifts_per_work_day
@@ -19,64 +24,66 @@ class TabuSearch:
         self.nrs_max_work_days_per_week = nrs_max_work_days_per_week
         self.nb_iter = nb_iter
         self.tabu_limit = tabu_limit
+        self.get_population = get_population
+        self.covering_cost = covering_cost
 
-    def get_random_nurse_schedule(self) -> np.ndarray:
-        nurses_worked_days_per_week = np.random.randint(
-            0,
-            self.nrs_max_work_days_per_week + 1,
-            1,
-        )
-        nurse_schedule = np.concatenate([
-            np.ones(nurses_worked_days_per_week, dtype=int),
-            np.zeros(
-                self.nb_work_days_per_week * self.nb_shifts_per_work_day -
-                nurses_worked_days_per_week,
-                dtype=int
-            ),
-        ])
-        nurse_schedule = np.random.permutation(nurse_schedule)
-        return nurse_schedule
+    # def get_random_nurse_schedule(self) -> np.ndarray:
+    #     nurses_worked_days_per_week = np.random.randint(
+    #         0,
+    #         self.nrs_max_work_days_per_week + 1,
+    #         1,
+    #     )
+    #     nurse_schedule = np.concatenate([
+    #         np.ones(nurses_worked_days_per_week, dtype=int),
+    #         np.zeros(
+    #             self.nb_work_days_per_week * self.nb_shifts_per_work_day -
+    #             nurses_worked_days_per_week,
+    #             dtype=int
+    #         ),
+    #     ])
+    #     nurse_schedule = np.random.permutation(nurse_schedule)
+    #     return nurse_schedule
 
-    def get_random_initial_solution(self) -> np.ndarray:
-        """
-        Given the number of nurses, the number of shifts, and the maximum number of 
-        work days per week, returns a random initial solution.
-        Output is a numpy array of shape (nb_nurses, nb_shifts) where each element 
-        is either 0 or 1.
-        """
-        out = np.empty(
-            (
-                self.nb_nurses,
-                self.nb_work_days_per_week * self.nb_shifts_per_work_day
-            ),
-            dtype=int
-        )
+    # def get_random_initial_solution(self) -> np.ndarray:
+    #     """
+    #     Given the number of nurses, the number of shifts, and the maximum number of 
+    #     work days per week, returns a random initial solution.
+    #     Output is a numpy array of shape (nb_nurses, nb_shifts) where each element 
+    #     is either 0 or 1.
+    #     """
+    #     out = np.empty(
+    #         (
+    #             self.nb_nurses,
+    #             self.nb_work_days_per_week * self.nb_shifts_per_work_day
+    #         ),
+    #         dtype=int
+    #     )
 
-        for nrs in range(self.nb_nurses):
-            nurse_schedule = self.get_random_nurse_schedule()
-            out[nrs] = nurse_schedule
-        return out
+    #     for nrs in range(self.nb_nurses):
+    #         nurse_schedule = self.get_random_nurse_schedule()
+    #         out[nrs] = nurse_schedule
+    #     return out
 
-    def covering_cost(self, solution: np.ndarray) -> int:
-        """
-        Given a solution, returns the covering cost.
-        """
-        required_coverage_per_shift = np.full(
-            (self.nb_work_days_per_week * self.nb_shifts_per_work_day),
-            self.nb_nrs_per_shift,
-            dtype=int,
-        )
-        coverage_per_shift = solution.sum(axis=0)
-        # coverage_cost = np.sum(np.maximum(0, required_coverage_per_shift - coverage_per_shift))
-        coverage_cost = np.sum(
-            np.square(required_coverage_per_shift - coverage_per_shift), axis=0)
-        return coverage_cost
+    # def covering_cost(self, solution: np.ndarray) -> int:
+    #     """
+    #     Given a solution, returns the covering cost.
+    #     """
+    #     required_coverage_per_shift = np.full(
+    #         (self.nb_work_days_per_week * self.nb_shifts_per_work_day),
+    #         self.nb_nrs_per_shift,
+    #         dtype=int,
+    #     )
+    #     coverage_per_shift = solution.sum(axis=0)
+    #     # coverage_cost = np.sum(np.maximum(0, required_coverage_per_shift - coverage_per_shift))
+    #     coverage_cost = np.sum(
+    #         np.square(required_coverage_per_shift - coverage_per_shift), axis=0)
+    #     return coverage_cost
 
     def get_best_neighbour(
         self, 
         solution: np.ndarray, 
         tabu_history: dict,
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, int, dict]:
         # generate a list of all neighbours
         # a neighbour is a solution where one nurse has changed one shift
         best_neighbour = np.empty(solution.shape, dtype=int)
@@ -89,7 +96,7 @@ class TabuSearch:
                 if (tuple(map(tuple, neighbour)) in tabu_history) or \
                     (neighbour[nrs].sum() > self.nrs_max_work_days_per_week):
                     continue
-                neighbour_cost = self.covering_cost(neighbour)
+                neighbour_cost = self.covering_cost.covering_cost(neighbour)
                 if neighbour_cost < best_neighbour_cost:
                     best_neighbour = neighbour
                     best_neighbour_cost = neighbour_cost
@@ -101,7 +108,7 @@ class TabuSearch:
         initial_solution: np.ndarray,
     ) -> tuple[np.ndarray, int, list]:
         best_solution = initial_solution
-        best_solution_cost = self.covering_cost(best_solution)
+        best_solution_cost = self.covering_cost.covering_cost(best_solution)
         states = [best_solution_cost]  # to plot costs through the algo
         tabu_history = {}
 
@@ -125,10 +132,9 @@ class TabuSearch:
 
     def search_solution(self) -> np.ndarray:
         # get initial random solution
-        initial_solution = self.get_random_initial_solution()
+        initial_solution = self.get_population.get_random_initial_solution()
 
         # tabu search
         # tabu list, in type dictionary (solution: nb of remaining iter in tabu list)
-        tabu_history = {}
         solution, solution_cost, states = self.tabu_search(initial_solution)
         return solution, solution_cost, states
