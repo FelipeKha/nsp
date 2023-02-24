@@ -170,7 +170,7 @@ class GeneticAlgo:
 
         return best_solution, best_solution_cost, states
 
-    def search_solution(self):
+    def search_solution(self) -> tuple[np.ndarray, int, list]:
         population = self.get_population.get_initial_population(self.pop_size)
         best_solution, best_solution_cost, states = self.simple_genetic_algorithm(
             population)
