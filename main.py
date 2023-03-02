@@ -55,7 +55,6 @@ if __name__ == '__main__':
     decay_rate = 0.99
     resume = False
 
-
     # run tabu search
     get_population = GetPopulation(
         nb_nurses,
@@ -77,8 +76,6 @@ if __name__ == '__main__':
         nrs_max_work_days_per_week,
         covering_cost,
     )
-
-
 
     tabu_search = TabuSearch(
         nb_nurses,

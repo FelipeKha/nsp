@@ -16,3 +16,4 @@ class TestTabuSearch:
         # assert nurse_schedule.shape == (7,)
         # assert nurse_schedule.sum() <= 5
         # assert nurse_schedule.sum() >= 0
+
