@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 from genetic_algo.genetic_algo import GeneticAlgo
-
+from particle_swarm.pso import ParticleSwarmOptimization
 from simulated_annealing.sim_anneal import SimulatedAnnealing
 from tabu_search.tabu_search import TabuSearch
 from utils.covering_cost import CoveringCost
@@ -37,6 +37,14 @@ if __name__ == '__main__':
     k = 20      # scale up the temperature
     lam = 0.005 # speed of decay of temperature (the lower the slower)
     limit = 100 # number of iterations after which no non_improving moves are accepted
+
+    # particle swarm optimization parameters
+    swarm_size = 20
+    max_iter = 1000
+    c1 = 0.7
+    c2 = 0.3
+    w = 0.75
+    alpha = 0.3
 
     # run tabu search
     get_population = GetPopulation(
@@ -106,9 +114,27 @@ if __name__ == '__main__':
         covering_cost,
     )
 
+    particle_swarm_optimization = ParticleSwarmOptimization(
+        nb_nurses,
+        nb_work_days_per_week,
+        nb_shifts_per_work_day,
+        nb_nrs_per_shift,
+        nrs_max_work_days_per_week,
+        swarm_size,
+        max_iter,
+        c1,
+        c2,
+        w,
+        alpha,
+        get_population,
+        covering_cost,
+    )
+
     # solution, solution_cost, states = tabu_search.search_solution()
     # solution, solution_cost, states = genetic_algorithm.search_solution()
-    solution, solution_cost, states = simulated_annealing.search_solution()
+    # solution, solution_cost, states = simulated_annealing.search_solution()
+    solution, solution_cost, states = particle_swarm_optimization.search_solution()
+
 
     # validate solution
     validation = Validation(
