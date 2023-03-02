@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 
+from google_cp_sat.cp_sat import CPSAT
 from genetic_algo.genetic_algo import GeneticAlgo
 from particle_swarm.pso import ParticleSwarmOptimization
 from simulated_annealing.sim_anneal import SimulatedAnnealing
@@ -45,6 +46,14 @@ if __name__ == '__main__':
     c2 = 0.3
     w = 0.75
     alpha = 0.3
+
+    # Reinforcement learning hyperparameters
+    H = 200
+    batch_size = 10
+    learning_rate = 1e-4
+    gamma = 0.99
+    decay_rate = 0.99
+    resume = False
 
 
     # run tabu search
@@ -132,10 +141,19 @@ if __name__ == '__main__':
         covering_cost,
     )
 
+    cpsat = CPSAT(
+        nb_nurses,
+        nb_work_days_per_week,
+        nb_shifts_per_work_day,
+        nb_nrs_per_shift,
+        nrs_max_work_days_per_week,
+    )
+
     # solution, solution_cost, states = tabu_search.search_solution()
     # solution, solution_cost, states = genetic_algorithm.search_solution()
     # solution, solution_cost, states = simulated_annealing.search_solution()
-    solution, solution_cost, states = particle_swarm_optimization.search_solution()
+    # solution, solution_cost, states = particle_swarm_optimization.search_solution()
+    solution, solution_cost, states = cpsat.search_solution()
 
     # validate solution
     validation = Validation(
