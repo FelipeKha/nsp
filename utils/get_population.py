@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class GetPopulation:
     def __init__(
         self, 
