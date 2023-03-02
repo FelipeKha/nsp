@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 
 from genetic_algo.genetic_algo import GeneticAlgo
+
 from simulated_annealing.sim_anneal import SimulatedAnnealing
 from tabu_search.tabu_search import TabuSearch
 from utils.covering_cost import CoveringCost
@@ -51,6 +52,7 @@ if __name__ == '__main__':
         nb_nrs_per_shift,
     )
 
+
     get_neighbour = GetNeighbour(
         nb_nurses,
         nb_work_days_per_week,
@@ -58,8 +60,6 @@ if __name__ == '__main__':
         nrs_max_work_days_per_week,
         covering_cost,
     )
-
-
 
     tabu_search = TabuSearch(
         nb_nurses,
