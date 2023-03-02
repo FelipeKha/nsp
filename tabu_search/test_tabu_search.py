@@ -1,4 +1,4 @@
-from tabu_search import TabuSearch
+from tabu_search.tabu_search import TabuSearch
 
 class TestTabuSearch:
     def test_get_random_nurse_schedule(self):
