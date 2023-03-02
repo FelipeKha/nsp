@@ -46,7 +46,6 @@ if __name__ == '__main__':
     w = 0.75
     alpha = 0.3
 
-
     # run tabu search
     get_population = GetPopulation(
         nb_nurses,
@@ -61,6 +60,7 @@ if __name__ == '__main__':
         nb_nrs_per_shift,
     )
 
+
     get_neighbour = GetNeighbour(
         nb_nurses,
         nb_work_days_per_week,
@@ -68,8 +68,6 @@ if __name__ == '__main__':
         nrs_max_work_days_per_week,
         covering_cost,
     )
-
-
 
     tabu_search = TabuSearch(
         nb_nurses,
@@ -136,6 +134,7 @@ if __name__ == '__main__':
     # solution, solution_cost, states = genetic_algorithm.search_solution()
     # solution, solution_cost, states = simulated_annealing.search_solution()
     solution, solution_cost, states = particle_swarm_optimization.search_solution()
+
 
     # validate solution
     validation = Validation(
