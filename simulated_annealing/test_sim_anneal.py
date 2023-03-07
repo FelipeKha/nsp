@@ -7,7 +7,7 @@ from utils.get_neighbour import GetNeighbour
 from utils.get_population import GetPopulation
 
 
-class TestTabuSearch:
+class TestSimulatedAnnealing:
     @pytest.fixture
     def get_population(self):
         """
