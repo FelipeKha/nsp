@@ -12,7 +12,7 @@ class CoveringCost:
         self.nb_shifts_per_work_day = nb_shifts_per_work_day
         self.nb_nrs_per_shift = nb_nrs_per_shift
 
-    def covering_cost(self, solution: np.ndarray) -> int:
+    def covering_cost(self, solution: np.ndarray) -> np.float64:
         """
         Given a solution, returns the covering cost.
         """
