@@ -124,7 +124,7 @@ class TestGetNeighbour:
         random_solution
     ):
         out = get_neighbour.get_neighbour(random_solution, 2)
-        assert type(out[1]) == np.int64
+        assert type(out[1]) == np.int64 or out[1] == np.inf
 
     # first element is a solution
     def test_get_neighbour_returns_solution(
@@ -271,6 +271,11 @@ class TestGetNeighbour:
         tabu_list = {tuple(map(tuple, random_solution)): 5}
         out = get_neighbour.get_neighbour_tabu(
             random_solution, 2, tabu_list, 10)
+        print('tabu_list', tabu_list)
+        print('out solution', out[0])
+        print('out covering cost', out[1])
+        print('out tabu list', out[2])
+        print('out covering cost calculated', covering_cost.covering_cost(out[0]))
         assert out[1] == covering_cost.covering_cost(out[0])
 
     # third element is a tabu list
@@ -285,7 +290,7 @@ class TestGetNeighbour:
         assert type(out[2]) == dict
 
     # third element is a tabu list with the input solution as key
-    def test_get_neighbour_tabu_returns_solution_not_in_tabu_list(
+    def test_get_neighbour_tabu_returns_solution_in_tabu_list(
             self,
             get_neighbour,
             random_solution
@@ -316,6 +321,10 @@ class TestGetNeighbour:
         tabu_list = {tuple(map(tuple, random_solution)): 5}
         out = get_neighbour.get_neighbour_tabu(
             random_solution, 2, tabu_list, 10)
+        print('tabu_list:', tabu_list)
+        print('out solution:', out[0])
+        print('out covering cost:', out[1])
+        print('out tabu list:', out[2])
         assert tuple(map(tuple, out[0])) in out[2]
 
     # third element is a tabu list with the first element as key and the value

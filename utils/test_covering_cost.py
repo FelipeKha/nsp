@@ -20,9 +20,9 @@ class TestCoveringCost:
             nb_nrs_per_shift=2,
         )
     
-    # returns type np.float64
-    def test_covering_cost_returns_type_np_float64(self, covering_cost):
-        assert type(covering_cost.covering_cost(np.zeros((4,7)))) == np.float64
+    # returns type np.int64
+    def test_covering_cost_returns_type_np_int64(self, covering_cost):
+        assert type(covering_cost.covering_cost(np.zeros((4,7)))) == np.int64
     
     # returns 0 for solution
     def test_covering_cost_returns_0_for_zero_solution(self, covering_cost):

@@ -24,5 +24,8 @@ class CoveringCost:
         coverage_per_shift = solution.sum(axis=0)
         # coverage_cost = np.sum(np.maximum(0, required_coverage_per_shift - coverage_per_shift))
         coverage_cost = np.sum(
-            np.square(required_coverage_per_shift - coverage_per_shift), axis=0)
+            np.square(required_coverage_per_shift - coverage_per_shift),
+            axis=0,
+            dtype=int,
+        )
         return coverage_cost
