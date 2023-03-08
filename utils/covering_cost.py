@@ -29,3 +29,31 @@ class CoveringCost:
             dtype=int,
         )
         return coverage_cost
+
+
+############################################
+# Function version
+
+
+# def covering_cost(
+#         solution: np.ndarray,
+#         nb_work_days_per_week: int,
+#         nb_shifts_per_work_day: int,
+#         nb_nrs_per_shift: int,
+# ) -> np.float64:
+#     """
+#     Given a solution, returns the covering cost.
+#     """
+#     required_coverage_per_shift = np.full(
+#         (nb_work_days_per_week * nb_shifts_per_work_day),
+#         nb_nrs_per_shift,
+#         dtype=int,
+#     )
+#     coverage_per_shift = solution.sum(axis=0)
+#     # coverage_cost = np.sum(np.maximum(0, required_coverage_per_shift - coverage_per_shift))
+#     coverage_cost = np.sum(
+#         np.square(required_coverage_per_shift - coverage_per_shift),
+#         axis=0,
+#         dtype=int,
+#     )
+#     return coverage_cost

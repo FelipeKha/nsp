@@ -1,6 +1,7 @@
 import numpy as np
 
 from utils.covering_cost import CoveringCost
+# from utils.covering_cost import covering_cost
 
 class GetNeighbour:
     def __init__(
@@ -92,7 +93,91 @@ class GetNeighbour:
             
         return best_neighbour, best_neighbour_cost, tabu_history
 
+######################
+# Function version
 
+# def get_neighbour(
+#     solution: np.ndarray,
+#     nb_nurses: int,
+#     nb_work_days_per_week: int,
+#     nb_shifts_per_work_day: int,
+#     nrs_max_work_days_per_week: int,
+#     nb_neighbours: int,
+#     covering_cost: callable,
+# ) -> tuple[np.ndarray, np.int64]:
+#     """
+#     Given a solution of dim (nb_nurses, nb_shifts), generate nb_neighbours 
+#     neighbours, and return the best one.
+#     A neighbour is a solution where one nurse has changed one shift.
+#     """
+#     best_neighbour = np.empty(
+#         (
+#             nb_nurses,
+#             nb_work_days_per_week * nb_shifts_per_work_day
+#         ),
+#         dtype=int
+#     )
+#     best_neighbour_cost = np.inf
+
+#     for _ in range(nb_neighbours):
+#         neighbour = solution.copy()
+#         nrs = np.random.randint(nb_nurses)
+#         shift = np.random.randint(
+#             nb_work_days_per_week * nb_shifts_per_work_day
+#         )
+#         neighbour[nrs, shift] = 1 - neighbour[nrs, shift]
+#         if neighbour[nrs].sum() > nrs_max_work_days_per_week:
+#             continue
+#         neighbour_cost = covering_cost(neighbour)
+#         if neighbour_cost < best_neighbour_cost:
+#             best_neighbour = neighbour
+#             best_neighbour_cost = neighbour_cost
+
+#     return best_neighbour, best_neighbour_cost
+
+# def get_neighbour_tabu(
+#     solution: np.ndarray,
+#     nb_nurses: int,
+#     nb_work_days_per_week: int,
+#     nb_shifts_per_work_day: int,
+#     nrs_max_work_days_per_week: int,
+#     nb_neighbours: int,
+#     tabu_history: dict,
+#     tabu_limit: int,
+#     covering_cost: callable,
+# ) -> tuple[np.ndarray, np.int64, dict]:
+#     """
+#     Given a solution of dim (nb_nurses, nb_shifts), generate nb_neighbours 
+#     neighbours, check them aginst the tabu list, and return the best one and 
+#     the updated tabu list.
+#     A neighbour is a solution where one nurse has changed one shift.
+#     """
+#     best_neighbour = np.empty(
+#         (
+#             nb_nurses,
+#             nb_work_days_per_week * nb_shifts_per_work_day
+#         ),
+#         dtype=int
+#     )
+#     best_neighbour_cost = np.inf
+
+#     for _ in range(nb_neighbours):
+#         neighbour = solution.copy()
+#         nrs = np.random.randint(nb_nurses)
+#         shift = np.random.randint(
+#             nb_work_days_per_week * nb_shifts_per_work_day
+#         )
+#         neighbour[nrs, shift] = 1 - neighbour[nrs, shift]
+#         if (tuple(map(tuple, neighbour)) in tabu_history) or \
+#             neighbour[nrs].sum() > nrs_max_work_days_per_week:
+#             continue
+#         neighbour_cost = covering_cost(neighbour)
+#         if neighbour_cost < best_neighbour_cost:
+#             best_neighbour = neighbour
+#             best_neighbour_cost = neighbour_cost
+#             tabu_history[tuple(map(tuple, best_neighbour))] = tabu_limit
+        
+#     return best_neighbour, best_neighbour_cost, tabu_history
 
         #--------------
         # best_neighbour = np.empty(solution.shape, dtype=int)
