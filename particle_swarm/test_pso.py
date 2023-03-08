@@ -3,8 +3,8 @@ import random
 import pytest
 
 from particle_swarm.pso import ParticleSwarmOptimization
+from utils.check_constraints import CheckConstraints
 from utils.covering_cost import CoveringCost
-from utils.get_neighbour import GetNeighbour
 from utils.get_population import GetPopulation
 
 
@@ -37,9 +37,16 @@ class TestParticleSwarmOptimization:
             nb_shifts_per_work_day=1,
             nb_nrs_per_shift=2,
         )
+    
+    @pytest.fixture
+    def check_constraints(self):
+        """
+        Returns a CheckConstraints instance.
+        """
+        return CheckConstraints()
 
     @pytest.fixture
-    def part_swarm(self, get_population, covering_cost):
+    def part_swarm(self, get_population, covering_cost, check_constraints):
         return ParticleSwarmOptimization(
             nb_nurses=4,
             nb_work_days_per_week=7,
@@ -54,6 +61,7 @@ class TestParticleSwarmOptimization:
             alpha=0.3,
             get_population=get_population,
             covering_cost=covering_cost,
+            check_constraints=check_constraints,
         )
 
     def is_solution(self, solution):
@@ -70,8 +78,6 @@ class TestParticleSwarmOptimization:
         if solution.shape != (4, 7):
             return False
         if not np.array_equal(solution, solution.astype(bool)):
-            return False
-        if solution.sum(axis=1).max() > 5:
             return False
         return True
 
@@ -414,81 +420,6 @@ class TestParticleSwarmOptimization:
             for j in range(4):
                 for k in range(7):
                     assert out[1][i, j, k] in [0, 1, 2]
-
-    # check_swarm
-    # returns a ndarray
-    def test_check_swarm_returns_ndarray(self, part_swarm):
-        swarm = np.random.randint(0, 2, size=(5, 4, 7))
-        out = part_swarm.check_swarm(swarm)
-        assert type(out) == np.ndarray
-
-    # returns a ndarray or dim (swarm_size, nb_nurses, nb_shifts)
-    def test_check_swarm_returns_ndarray_of_dim_swarm_size_nb_nurses_nb_shifts(
-            self,
-            part_swarm
-    ):
-        swarm = np.random.randint(0, 2, size=(5, 4, 7))
-        out = part_swarm.check_swarm(swarm)
-        assert out.shape == (5, 4, 7)
-
-    # each item of output is either 0 or 1
-    def test_check_swarm_each_item_of_output_is_either_0_or_1(self, part_swarm):
-        swarm = np.random.randint(0, 2, size=(5, 4, 7))
-        out = part_swarm.check_swarm(swarm)
-        for i in range(5):
-            for j in range(4):
-                for k in range(7):
-                    assert out[i, j, k] in [0, 1]
-
-    # each item of output is a solution
-    def test_check_swarm_each_item_of_output_is_a_solution(self, part_swarm):
-        swarm = np.random.randint(0, 2, size=(5, 4, 7))
-        out = part_swarm.check_swarm(swarm)
-        for i in range(5):
-            for j in range(4):
-                for k in range(7):
-                    assert [self.is_solution(sol) for sol in out]
-
-    # each item of output comply with the max work days per week constraint
-    def test_check_swarm_each_item_of_output_comply_with_the_max_work_days_per_week_constraint(
-            self,
-            part_swarm
-    ):
-        swarm = np.random.randint(0, 2, size=(5, 4, 7))
-        out = part_swarm.check_swarm(swarm)
-        for i in range(5):
-            for j in range(4):
-                for k in range(7):
-                    assert [sol.sum(axis=1).max() <= 5 for sol in out]
-
-    # if input has a solution not comlying with the max work days per week,
-    # removes shifts from overworked nurse
-    def test_check_swarm_if_input_has_a_solution_not_comlying_with_the_max_work_days_per_week_removes_shifts_from_overworked_nurse(
-            self,
-            part_swarm
-    ):
-        swarm = np.zeros((5, 4, 7), dtype=int)
-        for i in range(6):
-            swarm[0, 0, i] = 1
-        out = part_swarm.check_swarm(swarm)
-        assert [sol.sum(axis=1).max() <= 5 for sol in out]
-
-    # if inout has a solution not comlying with the max work days per week, and
-    # overworked nurse shift can be remove from overcovred shift, it will remove this in priority
-    def test_check_swarm_if_input_has_a_solution_not_comlying_with_the_max_work_days_per_week_and_overworked_nurse_shift_can_be_remove_from_overcovred_shift_it_will_remove_this_in_priority(
-            self,
-            part_swarm
-    ):
-        swarm = np.zeros((5, 4, 7), dtype=int)
-        for i in range(6):
-            swarm[0, 0, i] = 1
-        for i in range(1, 4):
-            swarm[0, i, 0] = 1
-        out = part_swarm.check_swarm(swarm)
-        target_swarm = swarm.copy()
-        target_swarm[0, 0, 0] = 0
-        assert [sol.sum(axis=1).max() <= 5 for sol in out] and np.array_equal(
-            out, target_swarm)
 
     # update_swarm
     # returns a ndarray

@@ -1,7 +1,8 @@
 import numpy as np
 
-from utils.get_population import GetPopulation
+from utils.check_constraints import CheckConstraints
 from utils.covering_cost import CoveringCost
+from utils.get_population import GetPopulation
 
 
 class ParticleSwarmOptimization:
@@ -20,6 +21,7 @@ class ParticleSwarmOptimization:
             alpha: float,
             get_population: GetPopulation,
             covering_cost: CoveringCost,
+            check_constraints: CheckConstraints,
     ) -> None:
         self.nb_nurses = nb_nurses
         self.nb_work_days_per_week = nb_work_days_per_week
@@ -34,6 +36,7 @@ class ParticleSwarmOptimization:
         self.alpha = alpha
         self.get_population = get_population
         self.covering_cost = covering_cost
+        self.check_constraints = check_constraints
 
     def get_pop_costs(
             self,
@@ -152,61 +155,6 @@ class ParticleSwarmOptimization:
         d2 = 1 - ycompare
         return d1, d2
 
-    # very ugly function, need to be refactored
-    def check_swarm(
-            self,
-            swarm: np.ndarray,
-    ) -> np.ndarray:
-        """
-        Given swarm of dim (swarm_size, nb_nurses, nb_shifts), check that the 
-        sum of number of shifts is less or equal to the max number of shifts. If 
-        not, the particle which does not comply with the max number of shifts 
-        has random shifts removed. If some shifts are overcovered, it will start 
-        by removing shifts here. Returns updated swarm. 
-        """
-        nb_shifts_per_particle = np.sum(swarm, axis=2)               # (swarm_size, nb_nurses)
-        func = lambda x: max(0, x - self.nrs_max_work_days_per_week)
-        func = np.vectorize(func)
-        nb_shifts_to_remove = func(nb_shifts_per_particle)           # (swarm_size, nb_nurses)
-        while nb_shifts_to_remove.sum() > 0:
-            particles_to_adjust = np.stack(np.where(nb_shifts_to_remove > 0), axis=1)    # (nb_particles_to_adjust)
-            # print('swarm', swarm)
-            # print('nb_shifts_to_remove', nb_shifts_to_remove)
-            # print('particle_to_adjust', particles_to_adjust)
-            p, n = particles_to_adjust[0]
-            p_shift_cover = np.sum(swarm[p], axis=0)                   # (nb_shifts)
-            # print('p_shift_cover', p_shift_cover)
-            p_shift_overcover = np.where(p_shift_cover > self.nb_nrs_per_shift)[0]           # (nb_shifts_overcover)
-            # print('p_shift_overcover', p_shift_overcover)
-            if p_shift_overcover.size > 0:
-                for s in p_shift_overcover:
-                    if swarm[p, n, s] == 1:
-                        swarm[p, n, s] = 0
-                        nb_shifts_to_remove[p, n] -= 1
-                        if nb_shifts_to_remove[p, n] == 0:
-                            break
-                    else:
-                        shifts_to_remove = np.random.choice(
-                            np.where(swarm[p, n] == 1)[0],
-                            nb_shifts_to_remove[p, n],
-                            replace=False,
-                        )
-                        for s in shifts_to_remove:
-                            swarm[p, n, s] = 0
-                            nb_shifts_to_remove[p, n] -= 1
-                    if nb_shifts_to_remove[p, n] == 0:
-                        break
-            else:
-                shifts_to_remove = np.random.choice(
-                    np.where(swarm[p, n] == 1)[0],
-                    nb_shifts_to_remove[p, n],
-                    replace=False,
-                )
-                for s in shifts_to_remove:
-                    swarm[p, n, s] = 0
-                    nb_shifts_to_remove[p, n] -= 1
-        return swarm
-
     def update_swarm(
             self,
             yupdate: np.ndarray,
@@ -312,7 +260,11 @@ class ParticleSwarmOptimization:
             ylambda = ycompare + v
             yupdate = self.get_yupdate(ylambda)
             pcurrent = self.update_swarm(yupdate, pbest, gbest)
-            pcurrent = self.check_swarm(pcurrent)
+            pcurrent = self.check_constraints.check_population_for_max_days_per_week(
+                pcurrent,
+                self.nb_nrs_per_shift,
+                self.nrs_max_work_days_per_week,
+            )
             pcurrent_costs = self.get_pop_costs(pcurrent)
             pbest, pbest_costs = self.update_pbest(
                 pcurrent, 

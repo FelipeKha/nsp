@@ -5,6 +5,7 @@ from genetic_algo.genetic_algo import GeneticAlgo
 from particle_swarm.pso import ParticleSwarmOptimization
 from simulated_annealing.sim_anneal import SimulatedAnnealing
 from tabu_search.tabu_search import TabuSearch
+from utils.check_constraints import CheckConstraints
 from utils.covering_cost import CoveringCost
 from utils.get_neighbour import GetNeighbour
 from utils.get_population import GetPopulation
@@ -77,6 +78,8 @@ if __name__ == '__main__':
         covering_cost,
     )
 
+    check_constraints = CheckConstraints()
+
     tabu_search = TabuSearch(
         nb_nurses,
         nb_work_days_per_week,
@@ -136,6 +139,7 @@ if __name__ == '__main__':
         alpha,
         get_population,
         covering_cost,
+        check_constraints,
     )
 
     cpsat = CPSAT(
@@ -149,8 +153,8 @@ if __name__ == '__main__':
     # solution, solution_cost, states = tabu_search.search_solution()
     # solution, solution_cost, states = genetic_algorithm.search_solution()
     # solution, solution_cost, states = simulated_annealing.search_solution()
-    # solution, solution_cost, states = particle_swarm_optimization.search_solution()
-    solution, solution_cost, states = cpsat.search_solution()
+    solution, solution_cost, states = particle_swarm_optimization.search_solution()
+    # solution, solution_cost, states = cpsat.search_solution()
 
     # validate solution
     validation = Validation(
