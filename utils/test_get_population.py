@@ -13,7 +13,6 @@ class TestGetPopulation:
     def get_population(self):
         """
         Returns a GetPopulation instance with:
-        - Nurses: 4
         - Work days: 7
         - Shift per workday: 1
         - Max work days per week: 5

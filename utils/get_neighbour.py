@@ -21,7 +21,7 @@ class GetNeighbour:
         self,
         solution: np.ndarray,
         nb_neighbours: int,
-    ) -> tuple[np.ndarray, int]:
+    ) -> tuple[np.ndarray, np.int64]:
         """
         Given a solution of dim (nb_nurses, nb_shifts), generate nb_neighbours 
         neighbours, and return the best one.
@@ -58,7 +58,7 @@ class GetNeighbour:
         nb_neighbours: int,
         tabu_history: dict,
         tabu_limit: int,
-    ) -> tuple[np.ndarray, int, dict]:
+    ) -> tuple[np.ndarray, np.int64, dict]:
         """
         Given a solution of dim (nb_nurses, nb_shifts), generate nb_neighbours 
         neighbours, check them aginst the tabu list, and return the best one and 
