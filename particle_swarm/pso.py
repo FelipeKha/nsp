@@ -43,7 +43,7 @@ class ParticleSwarmOptimization:
         Given a swarm of dim (swarm_size, nb_nurses, nb_shifts), returns the 
         cost for each particle of the swarm of dim (swarm_size)
         """
-        costs = np.empty(self.swarm_size)
+        costs = np.empty(self.swarm_size, dtype=int)
         for i in range(self.swarm_size):
             costs[i] = self.covering_cost.covering_cost(swarm[i])
         return costs
@@ -53,12 +53,12 @@ class ParticleSwarmOptimization:
             p: int,
             pb: int,
             gb: int,
-    ) -> int:
+    ) -> np.int64:
         """
         Given a shift p, historical best shift pb and historical best shift
         of the swarm gb, returns y value.
         y take value 1 if shift same as shift = gbest, -1 if shift = pbest, -1
-        or 1 randomly if shift = pbest and shift = gbest
+        or 1 randomly if shift = pbest and shift = gbest, 0 otherwise.
         """
         out = (
             1 * (p == gb)
@@ -161,7 +161,8 @@ class ParticleSwarmOptimization:
         Given swarm of dim (swarm_size, nb_nurses, nb_shifts), check that the 
         sum of number of shifts is less or equal to the max number of shifts. If 
         not, the particle which does not comply with the max number of shifts 
-        has random shifts removed. Returns updated swarm. 
+        has random shifts removed. If some shifts are overcovered, it will start 
+        by removing shifts here. Returns updated swarm. 
         """
         nb_shifts_per_particle = np.sum(swarm, axis=2)               # (swarm_size, nb_nurses)
         func = lambda x: max(0, x - self.nrs_max_work_days_per_week)
@@ -227,7 +228,6 @@ class ParticleSwarmOptimization:
             pbest,
             gbest,
         )
-        swarm = self.check_swarm(swarm)
         return swarm
 
     def update_pbest(
@@ -255,7 +255,7 @@ class ParticleSwarmOptimization:
             gbest_cost: int, 
             pbest: np.ndarray, 
             pbest_costs: np.ndarray,
-    ) -> tuple[np.ndarray, int]:
+    ) -> tuple[np.ndarray, np.int64]:
         """
         Given global best partile (nb_nurses, nb_shifts) and its cost, and 
         historical best for each particle (swarm_size, nb_nurses, nb_shifts) and 
@@ -312,6 +312,7 @@ class ParticleSwarmOptimization:
             ylambda = ycompare + v
             yupdate = self.get_yupdate(ylambda)
             pcurrent = self.update_swarm(yupdate, pbest, gbest)
+            pcurrent = self.check_swarm(pcurrent)
             pcurrent_costs = self.get_pop_costs(pcurrent)
             pbest, pbest_costs = self.update_pbest(
                 pcurrent, 

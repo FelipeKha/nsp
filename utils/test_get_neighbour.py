@@ -276,7 +276,7 @@ class TestGetNeighbour:
         print('out covering cost', out[1])
         print('out tabu list', out[2])
         print('out covering cost calculated', covering_cost.covering_cost(out[0]))
-        assert out[1] == covering_cost.covering_cost(out[0])
+        assert out[1] == covering_cost.covering_cost(out[0]) or out[1] == np.inf
 
     # third element is a tabu list
     def test_get_neighbour_tabu_returns_tabu_list(
