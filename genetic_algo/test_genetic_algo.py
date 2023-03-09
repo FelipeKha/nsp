@@ -297,48 +297,48 @@ class TestGeneticAlgo:
 
     # __call__
     # return tuple of len 3
-    def test_search_solution(self, genetic_algo, problem):
+    def test_call_return_turple_len_3(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert type(out) == tuple
         assert len(out) == 3
 
     # first element is a numpy array
-    def test_search_solution_first_element(self, genetic_algo, problem):
+    def test_call_first_element(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert type(out[0]) == np.ndarray
 
     # first element is a solution
-    def test_search_solution_first_element_is_solution(self, genetic_algo, problem):
+    def test_call_first_element_is_solution(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert self.is_solution(out[0])
 
     # first element comply with the max work days per week constraint
-    def test_search_solution_first_element_max_work_days_per_week(self, genetic_algo, problem):
+    def test_call_first_element_max_work_days_per_week(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert out[0].sum(axis=1).max() <= 5
 
     # second element is of type np.int64
-    def test_search_solution_second_element(self, genetic_algo, problem):
+    def test_call_second_element(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert type(out[1]) == np.int64
 
     # second element is the covering cost of the first element
-    def test_search_solution_second_element_covering_cost(self, genetic_algo, problem):
+    def test_call_second_element_covering_cost(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert out[1] == covering_cost(out[0], problem)
 
     # third element is a list
-    def test_search_solution_third_element(self, genetic_algo, problem):
+    def test_call_third_element(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert type(out[2]) == list
 
     # third element is a list of np.int64 or np.inf
-    def test_search_solution_third_element_list(self, genetic_algo, problem):
+    def test_call_third_element_list(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert all(type(x) == np.int64 or type(x) == np.inf for x in out[2])
 
     # third element items are all greater than or equal to 0
-    def test_search_solution_third_element_list(self, genetic_algo, problem):
+    def test_call_third_element_list(self, genetic_algo, problem):
         out = genetic_algo(problem)
         assert all(x >= 0 for x in out[2])
 

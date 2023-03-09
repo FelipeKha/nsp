@@ -3,65 +3,79 @@ import random
 import pytest
 
 from particle_swarm.pso import ParticleSwarmOptimization
-from utils.check_constraints import CheckConstraints
-from utils.covering_cost import CoveringCost
-from utils.get_population import GetPopulation
+from problem_setup.problem import Problem
+from utils.check_constraints import check_population_for_max_days_per_week
+from utils.covering_cost import covering_cost
+from utils.get_population import get_initial_population
 
 
 class TestParticleSwarmOptimization:
     @pytest.fixture
-    def get_population(self):
+    def problem(self):
         """
-        Returns a GetPopulation instance with:
-        - Work days: 7
-        - Shift per workday: 1
-        - Max work days per week: 5
-        """
-        return GetPopulation(
-            nb_nurses=4,
-            nb_work_days_per_week=7,
-            nb_shifts_per_work_day=1,
-            nrs_max_work_days_per_week=5,
-        )
-
-    @pytest.fixture
-    def covering_cost(self):
-        """
-        Returns a CoveringCost instance with:
+        Returns a Problem instance with:
+        - Nb nurses: 4
         - Work days: 7
         - Shift per workday: 1
         - Required nurses per shift: 2
+        - Max work days per week: 5
         """
-        return CoveringCost(
-            nb_work_days_per_week=7,
-            nb_shifts_per_work_day=1,
-            nb_nrs_per_shift=2,
-        )
-    
-    @pytest.fixture
-    def check_constraints(self):
-        """
-        Returns a CheckConstraints instance.
-        """
-        return CheckConstraints()
-
-    @pytest.fixture
-    def part_swarm(self, get_population, covering_cost, check_constraints):
-        return ParticleSwarmOptimization(
+        return Problem(
             nb_nurses=4,
             nb_work_days_per_week=7,
             nb_shifts_per_work_day=1,
-            nb_nrs_per_shift=2,
+            target_nb_nrs_per_shift=2,
             nrs_max_work_days_per_week=5,
+        )
+
+    # @pytest.fixture
+    # def get_population(self):
+    #     """
+    #     Returns a GetPopulation instance with:
+    #     - Work days: 7
+    #     - Shift per workday: 1
+    #     - Max work days per week: 5
+    #     """
+    #     return GetPopulation(
+    #         nb_nurses=4,
+    #         nb_work_days_per_week=7,
+    #         nb_shifts_per_work_day=1,
+    #         nrs_max_work_days_per_week=5,
+    #     )
+
+    # @pytest.fixture
+    # def covering_cost(self):
+    #     """
+    #     Returns a CoveringCost instance with:
+    #     - Work days: 7
+    #     - Shift per workday: 1
+    #     - Required nurses per shift: 2
+    #     """
+    #     return CoveringCost(
+    #         nb_work_days_per_week=7,
+    #         nb_shifts_per_work_day=1,
+    #         nb_nrs_per_shift=2,
+    #     )
+    
+    # @pytest.fixture
+    # def check_constraints(self):
+    #     """
+    #     Returns a CheckConstraints instance.
+    #     """
+    #     return CheckConstraints()
+
+    @pytest.fixture
+    def part_swarm(self):
+        return ParticleSwarmOptimization(
             swarm_size=5,
             max_iter=20,
             c1=0.7,
             c2=0.3,
             w=0.75,
             alpha=0.3,
-            get_population=get_population,
+            get_initial_population=get_initial_population,
             covering_cost=covering_cost,
-            check_constraints=check_constraints,
+            check_population_for_max_days_per_week=check_population_for_max_days_per_week,
         )
 
     def is_solution(self, solution):
@@ -71,7 +85,6 @@ class TestParticleSwarmOptimization:
         - solution has the expected shape (nb_nurses, nb_work_days_per_week * 
         nb_shifts_per_work_day)
         - solution is binary
-        - solution comply with the max work days per week constraint
         """
         if type(solution) != np.ndarray:
             return False
@@ -83,38 +96,40 @@ class TestParticleSwarmOptimization:
 
     # get_pop_costs
     # return a ndarray
-    def test_get_pop_costs_returns_ndarray(self, part_swarm):
+    def test_get_pop_costs_returns_ndarray(self, part_swarm, problem):
         swarm = np.random.randint(2, size=(5, 4, 7))
-        out = part_swarm.get_pop_costs(swarm)
+        out = part_swarm.get_pop_costs(swarm, problem)
         assert type(out) == np.ndarray
 
     # returns a ndarray of shape (swarm_size)
     def test_get_pop_costs_returns_ndarray_of_shape_swarm_size(
             self,
-            part_swarm
+            part_swarm,
+            problem,
     ):
         swarm = np.random.randint(2, size=(5, 4, 7))
-        out = part_swarm.get_pop_costs(swarm)
+        out = part_swarm.get_pop_costs(swarm, problem)
         assert out.shape == (5,)
 
     # each item of output is covering cost of input
     def test_get_pop_costs_each_item_of_output_is_covering_cost_of_input(
             self,
             part_swarm,
-            covering_cost
+            problem,
     ):
         swarm = np.random.randint(2, size=(5, 4, 7))
-        out = part_swarm.get_pop_costs(swarm)
+        out = part_swarm.get_pop_costs(swarm, problem)
         for i in range(5):
-            assert out[i] == covering_cost.covering_cost(swarm[i])
+            assert out[i] == covering_cost(swarm[i], problem)
 
     # each item of outputs is greater than or equal to 0
     def test_get_pop_costs_each_item_of_outputs_is_greater_than_or_equal_to_0(
             self,
-            part_swarm
+            part_swarm,
+            problem
     ):
         swarm = np.random.randint(2, size=(5, 4, 7))
-        out = part_swarm.get_pop_costs(swarm)
+        out = part_swarm.get_pop_costs(swarm, problem)
         assert (out >= 0).all()
 
     # ycompare_func
@@ -129,7 +144,7 @@ class TestParticleSwarmOptimization:
     # returns 1 if y = gbest (current shift same as swarm best)
     def test_ycompare_func_returns_1_if_y_equals_gbest(
             self,
-            part_swarm
+            part_swarm,
     ):
         y = random.randint(0, 1)
         pbest = 1 - y
@@ -140,7 +155,7 @@ class TestParticleSwarmOptimization:
     # returns -1 if y = pbest (current shift same as personal best)
     def test_ycompare_func_returns_minus_1_if_y_equals_pbest(
             self,
-            part_swarm
+            part_swarm,
     ):
         y = random.randint(0, 1)
         pbest = y
@@ -151,7 +166,7 @@ class TestParticleSwarmOptimization:
     # returns -1 or 1 randomly if y = gbest = pbest
     def test_ycompare_func_returns_minus_1_or_1_randomly_if_y_equals_gbest_equals_pbest(
             self,
-            part_swarm
+            part_swarm,
     ):
         y = random.randint(0, 1)
         pbest = y
@@ -177,7 +192,7 @@ class TestParticleSwarmOptimization:
     # returns 1 if ylambda > alpha
     def test_yupdate_func_returns_1_if_ylambda_greater_than_alpha(
             self,
-            part_swarm
+            part_swarm,
     ):
         ylambda = part_swarm.alpha + 0.1
         out = part_swarm.yupdate_func(ylambda)
@@ -186,7 +201,7 @@ class TestParticleSwarmOptimization:
     # returns -1 if ylambda < alpha
     def test_yupdate_func_returns_minus_1_if_ylambda_less_than_alpha(
             self,
-            part_swarm
+            part_swarm,
     ):
         ylambda = part_swarm.alpha - 0.1
         out = part_swarm.yupdate_func(ylambda)
@@ -477,11 +492,11 @@ class TestParticleSwarmOptimization:
 
     # update_pbest
     # returns a tuple of len 2
-    def test_update_pbest_returns_tuple_of_len_2(self, part_swarm):
+    def test_update_pbest_returns_tuple_of_len_2(self, part_swarm, problem):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -491,11 +506,11 @@ class TestParticleSwarmOptimization:
         assert len(out) == 2
 
     # first element is a ndarray
-    def test_update_pbest_first_element_is_ndarray(self, part_swarm):
+    def test_update_pbest_first_element_is_ndarray(self, part_swarm, problem):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -507,12 +522,13 @@ class TestParticleSwarmOptimization:
     # first element is a ndarray of dim (swarm_size, nb_nurses, nb_shifts)
     def test_update_pbest_first_element_is_ndarray_of_dim_swarm_size_nb_nurses_nb_shifts(
             self,
-            part_swarm
+            part_swarm,
+            problem,
     ):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -522,11 +538,11 @@ class TestParticleSwarmOptimization:
         assert out[0].shape == (5, 4, 7)
 
     # first element is either 1 or 0
-    def test_update_pbest_first_element_is_either_1_or_0(self, part_swarm):
+    def test_update_pbest_first_element_is_either_1_or_0(self, part_swarm, problem):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -536,11 +552,11 @@ class TestParticleSwarmOptimization:
         assert np.all((out[0] == 0) | (out[0] == 1))
 
     # first element is a solution
-    def test_update_pbest_first_element_is_a_solution(self, part_swarm):
+    def test_update_pbest_first_element_is_a_solution(self, part_swarm, problem):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -553,12 +569,13 @@ class TestParticleSwarmOptimization:
     # updated with pcurrent
     def test_update_pbest_if_pcurrent_is_a_solution_with_a_lower_covering_cost_than_pbest_pbest_is_updated_with_pcurrent(
             self,
-            part_swarm
+            part_swarm,
+            problem,
     ):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.zeros((5, 4, 7), dtype=int)
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -568,11 +585,11 @@ class TestParticleSwarmOptimization:
         assert np.array_equal(out[0], pcurrent)
 
     # second element is a ndarray
-    def test_update_pbest_second_element_is_ndarray(self, part_swarm):
+    def test_update_pbest_second_element_is_ndarray(self, part_swarm, problem):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -584,12 +601,13 @@ class TestParticleSwarmOptimization:
     # second element is a ndarray of dim (swarm_size)
     def test_update_pbest_second_element_is_ndarray_of_dim_swarm_size(
             self,
-            part_swarm
+            part_swarm,
+            problem,
     ):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -602,30 +620,31 @@ class TestParticleSwarmOptimization:
     def test_update_pbest_second_element_is_covering_cost_of_first_element(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
             pbest,
             pbest_costs
         )
-        target_out = part_swarm.get_pop_costs(out[0])
+        target_out = part_swarm.get_pop_costs(out[0], problem)
         assert np.array_equal(out[1], target_out)
     # second element is greater than or equal to 0
 
     def test_update_pbest_second_element_is_greater_than_or_equal_to_0(
             self,
-            part_swarm
+            part_swarm,
+            problem,
     ):
         pcurrent = np.random.randint(0, 2, size=(5, 4, 7))
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pcurrent_costs = part_swarm.get_pop_costs(pcurrent)
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pcurrent_costs = part_swarm.get_pop_costs(pcurrent, problem)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         out = part_swarm.update_pbest(
             pcurrent,
             pcurrent_costs,
@@ -639,12 +658,12 @@ class TestParticleSwarmOptimization:
     def test_update_gbest_returns_tuple_of_len_2(
             self,
             part_swarm,
-            covering_cost
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.random.randint(0, 2, size=(4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
         assert len(out) == 2
 
@@ -652,12 +671,12 @@ class TestParticleSwarmOptimization:
     def test_update_gbest_first_element_is_ndarray(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.random.randint(0, 2, size=(4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
         assert type(out[0]) == np.ndarray
 
@@ -665,12 +684,12 @@ class TestParticleSwarmOptimization:
     def test_update_gbest_first_element_is_ndarray_of_dim_swarm_size_nb_nurses_nb_shifts(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.random.randint(0, 2, size=(4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
         assert out[0].shape == (4, 7)
 
@@ -678,12 +697,12 @@ class TestParticleSwarmOptimization:
     def test_update_gbest_first_element_is_either_1_or_0(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.random.randint(0, 2, size=(4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
         assert np.all(np.logical_or(out[0] == 1, out[0] == 0))
 
@@ -691,12 +710,12 @@ class TestParticleSwarmOptimization:
     def test_update_gbest_first_element_is_a_solution(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.random.randint(0, 2, size=(4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
         assert self.is_solution(out[0])
 
@@ -705,16 +724,16 @@ class TestParticleSwarmOptimization:
     def test_update_gbest_if_pbest_is_a_solution_with_a_lower_covering_cost_than_gbest_gbest_is_updated_with_pbest(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.zeros((4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
         target_out = min(
             pbest,
-            key=lambda x: covering_cost.covering_cost(x)
+            key=lambda x: covering_cost(x, problem)
         )
         assert np.array_equal(out[0], target_out)
 
@@ -722,12 +741,12 @@ class TestParticleSwarmOptimization:
     def test_update_gbest_second_element_is_np_int64(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.random.randint(0, 2, size=(4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
         assert type(out[1]) == np.int64
 
@@ -735,26 +754,26 @@ class TestParticleSwarmOptimization:
     def test_update_gbest_second_element_is_covering_cost_of_first_element(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.random.randint(0, 2, size=(4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
-        target_out = covering_cost.covering_cost(out[0])
+        target_out = covering_cost(out[0], problem)
         assert out[1] == target_out
 
     # second element is greater than or equal to 0
     def test_update_gbest_second_element_is_greater_than_or_equal_to_0(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         pbest = np.random.randint(0, 2, size=(5, 4, 7))
-        pbest_costs = part_swarm.get_pop_costs(pbest)
+        pbest_costs = part_swarm.get_pop_costs(pbest, problem)
         gbest = np.random.randint(0, 2, size=(4, 7))
-        gbest_costs = covering_cost.covering_cost(gbest)
+        gbest_costs = covering_cost(gbest, problem)
         out = part_swarm.update_gbest(gbest, gbest_costs, pbest, pbest_costs)
         assert out[1] >= 0
 
@@ -795,98 +814,106 @@ class TestParticleSwarmOptimization:
     def test_particle_swarm_optimization_return_tuple_of_len_3(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert len(out) == 3
 
     # first element is a numpy array
     def test_particle_swarm_optimization_first_element_is_a_numpy_array(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert type(out[0]) == np.ndarray
 
     # first element is a numpy array of dim (nb_nurses, nb_shifts)
     def test_particle_swarm_optimization_first_element_is_a_numpy_array_of_dim_nb_nurses_nb_shifts(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert out[0].shape == (4, 7)
 
     # first element is a solution
     def test_particle_swarm_optimization_first_element_is_a_solution(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert self.is_solution(out[0])
 
     # first element comply with the max work days per week constraint
     def test_particle_swarm_optimization_first_element_comply_with_the_max_work_days_per_week_constraint(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert out[0].sum(axis=1).max() <= 5
 
     # second element is of type np.int64
     def test_particle_swarm_optimization_second_element_is_of_type_np_int64(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert type(out[1]) == np.int64
 
     # second element is the covering cost of the first element
     def test_particle_swarm_optimization_second_element_is_the_covering_cost_of_the_first_element(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
-        assert out[1] == covering_cost.covering_cost(out[0])
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
+        assert out[1] == covering_cost(out[0], problem)
 
     # covering cost of first element is less than or equal to the covering cost
     # of the initial solution
     def test_particle_swarm_optimization_covering_cost_of_first_element_is_less_than_or_equal_to_the_covering_cost_of_the_initial_solution(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         best_init = min(
             initial_swarm,
-            key=lambda x: covering_cost.covering_cost(x),
+            key=lambda x: covering_cost(x, problem),
         )
-        best_init_cost = covering_cost.covering_cost(best_init)
-        assert covering_cost.covering_cost(out[0]) <= best_init_cost
+        best_init_cost = covering_cost(best_init, problem)
+        assert covering_cost(out[0], problem) <= best_init_cost
 
     # third element is a list
     def test_particle_swarm_optimization_third_element_is_a_list(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert type(out[2]) == list
 
     # third element is a list of np.int64 or np.inf
     def test_particle_swarm_optimization_third_element_is_a_list_of_np_int64_or_np_inf(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert all(
             type(x) == np.int64 or type(x) == np.inf for x in out[2]
         )
@@ -895,76 +922,81 @@ class TestParticleSwarmOptimization:
     def test_particle_swarm_optimization_third_element_items_are_all_greater_than_or_equal_to_0(
             self,
             part_swarm,
+            problem,
     ):
         initial_swarm = np.zeros((5, 4, 7))
-        out = part_swarm.particle_swarm_optimization(initial_swarm)
+        out = part_swarm.particle_swarm_optimization(initial_swarm, problem)
         assert all(x >= 0 for x in out[2])
 
-    # search_solution
+    # __call__
     # return tuple of len 3
-    def test_search_solution_return_tuple_of_len_3(self, part_swarm):
-        out = part_swarm.search_solution()
+    def test_call_return_tuple_of_len_3(self, part_swarm, problem):
+        out = part_swarm(problem)
         assert len(out) == 3
 
     # first element is a numpy array
-    def test_search_solution_first_element_is_a_numpy_array(self, part_swarm):
-        out = part_swarm.search_solution()
+    def test_call_first_element_is_a_numpy_array(self, part_swarm, problem):
+        out = part_swarm(problem)
         assert type(out[0]) == np.ndarray
 
     # first element is a numpy array of dim (nb_nurses, nb_shifts)
-    def test_search_solution_first_element_is_a_numpy_array_of_dim_nb_nurses_nb_shifts(
+    def test_call_first_element_is_a_numpy_array_of_dim_nb_nurses_nb_shifts(
             self,
             part_swarm,
+            problem,
     ):
-        out = part_swarm.search_solution()
+        out = part_swarm(problem)
         assert out[0].shape == (4, 7)
 
     # first element is a solution
-    def test_search_solution_first_element_is_a_solution(self, part_swarm):
-        out = part_swarm.search_solution()
+    def test_call_first_element_is_a_solution(self, part_swarm, problem):
+        out = part_swarm(problem)
         assert self.is_solution(out[0])
 
     # first element comply with the max work days per week constraint
-    def test_search_solution_first_element_comply_with_the_max_work_days_per_week_constraint(
+    def test_call_first_element_comply_with_the_max_work_days_per_week_constraint(
             self,
             part_swarm,
+            problem,
     ):
-        out = part_swarm.search_solution()
+        out = part_swarm(problem)
         assert out[0].sum(axis=1).max() <= 5
 
     # second element is of type np.int64
-    def test_search_solution_second_element_is_of_type_np_int64(self, part_swarm):
-        out = part_swarm.search_solution()
+    def test_call_second_element_is_of_type_np_int64(self, part_swarm, problem):
+        out = part_swarm(problem)
         assert type(out[1]) == np.int64
 
     # second element is the covering cost of the first element
-    def test_search_solution_second_element_is_the_covering_cost_of_the_first_element(
+    def test_call_second_element_is_the_covering_cost_of_the_first_element(
             self,
             part_swarm,
-            covering_cost,
+            problem,
     ):
-        out = part_swarm.search_solution()
-        assert out[1] == covering_cost.covering_cost(out[0])
+        out = part_swarm(problem)
+        assert out[1] == covering_cost(out[0], problem)
 
     # third element is a list
-    def test_search_solution_third_element_is_a_list(self, part_swarm):
-        out = part_swarm.search_solution()
+    def test_call_third_element_is_a_list(self, part_swarm, problem):
+        out = part_swarm(problem)
         assert type(out[2]) == list
 
     # third element is a list of np.int64 or np.inf
-    def test_search_solution_third_element_is_a_list_of_np_int64_or_np_inf(
+    def test_call_third_element_is_a_list_of_np_int64_or_np_inf(
             self,
             part_swarm,
+            problem,
     ):
-        out = part_swarm.search_solution()
+        out = part_swarm(problem)
         assert all(
             type(x) == np.int64 or type(x) == np.inf for x in out[2]
         )
 
     # third element items are all greater than or equal to 0
-    def test_search_solution_third_element_items_are_all_greater_than_or_equal_to_0(
+    def test_call_third_element_items_are_all_greater_than_or_equal_to_0(
             self,
             part_swarm,
+            problem,
     ):
-        out = part_swarm.search_solution()
+        out = part_swarm(problem)
         assert all(x >= 0 for x in out[2])

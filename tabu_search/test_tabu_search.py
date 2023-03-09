@@ -129,22 +129,22 @@ class TestTabuSearch:
 
     # __call__
     # return tuple of len 3
-    def test_search_solution_return_tuple_of_len_3(self, tabu_search, problem):
+    def test_call_return_tuple_of_len_3(self, tabu_search, problem):
         out = tabu_search(problem)
         assert len(out) == 3
 
     # first element is a numpy array
-    def test_search_solution_first_element_is_a_numpy_array(self, tabu_search, problem):
+    def test_call_first_element_is_a_numpy_array(self, tabu_search, problem):
         out = tabu_search(problem)
         assert type(out[0]) == np.ndarray
 
     # first element is a solution
-    def test_search_solution_first_element_is_a_solution(self, tabu_search, problem):
+    def test_call_first_element_is_a_solution(self, tabu_search, problem):
         out = tabu_search(problem)
         assert self.is_solution(out[0])
 
     # first element comply with the max work days per week constraint
-    def test_search_solution_first_element_comply_max_work_days_per_week(
+    def test_call_first_element_comply_max_work_days_per_week(
             self,
             tabu_search,
             problem,
@@ -153,12 +153,12 @@ class TestTabuSearch:
         assert out[0].sum(axis=1).max() <= 5
 
     # second element is of type np.int64
-    def test_search_solution_second_element_is_np_int64(self, tabu_search, problem):
+    def test_call_second_element_is_np_int64(self, tabu_search, problem):
         out = tabu_search(problem)
         assert type(out[1]) == np.int64
 
     # second element is the covering cost of the first element
-    def test_search_solution_second_element_is_covering_cost_of_first_element(
+    def test_call_second_element_is_covering_cost_of_first_element(
             self,
             tabu_search,
             problem,
@@ -167,12 +167,12 @@ class TestTabuSearch:
         assert out[1] == covering_cost(out[0], problem)
 
     # third element is a list
-    def test_search_solution_third_element_is_a_list(self, tabu_search, problem):
+    def test_call_third_element_is_a_list(self, tabu_search, problem):
         out = tabu_search(problem)
         assert type(out[2]) == list
 
     # third element is a list of np.int64 or np.inf
-    def test_search_solution_third_element_is_a_list_of_np_int64(
+    def test_call_third_element_is_a_list_of_np_int64(
             self,
             tabu_search, 
             problem,
@@ -184,7 +184,7 @@ class TestTabuSearch:
         assert all(type(x) == np.int64 or x == np.inf for x in out[2])
 
     # third element items are all greater than or equal to 0
-    def test_search_solution_third_element_items_are_greater_than_or_equal_to_0(
+    def test_call_third_element_items_are_greater_than_or_equal_to_0(
             self,
             tabu_search, 
             problem,

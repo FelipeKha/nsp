@@ -3,17 +3,17 @@ import matplotlib.pyplot as plt
 
 # from google_cp_sat.cp_sat import CPSAT
 from genetic_algo.genetic_algo import GeneticAlgo
-# from particle_swarm.pso import ParticleSwarmOptimization
+from particle_swarm.pso import ParticleSwarmOptimization
 from problem_setup.problem import Problem
 # from reinforcement_learning.rf_rnn import ReingforcementLearningRNN
-# from simulated_annealing.sim_anneal import SimulatedAnnealing
+from simulated_annealing.sim_anneal import SimulatedAnnealing
 from tabu_search.tabu_search import TabuSearch
-# from utils.check_constraints import CheckConstraints
+from utils.check_constraints import check_population_for_max_days_per_week
 from utils.covering_cost import covering_cost
-from utils.get_neighbour import get_neighbour_tabu
+from utils.get_neighbour import get_neighbour, get_neighbour_tabu
 from utils.get_population import \
     get_random_initial_solution, \
-        get_initial_population
+    get_initial_population
 # from validation import Validation
 
 parser = argparse.ArgumentParser(
@@ -91,8 +91,27 @@ algos = {
         get_initial_population=get_initial_population,
         covering_cost=covering_cost,
     ),
-    # 'simulated_annealing': SimulatedAnnealing,
-    # 'particle_swarm_optimization': ParticleSwarmOptimization,
+    'simulated_annealing': SimulatedAnnealing(
+        nb_iter=1000,
+        nb_neighbours=10,
+        k=20,
+        lam=0.005,
+        limit=100,
+        get_random_initial_solution=get_random_initial_solution,
+        get_neighbour=get_neighbour,
+        covering_cost=covering_cost,
+    ),
+    'particle_swarm_optimization': ParticleSwarmOptimization(
+        swarm_size=20,
+        max_iter=1000,
+        c1=0.7,
+        c2=0.3,
+        w=0.75,
+        alpha=0.3,
+        get_initial_population=get_initial_population,
+        covering_cost=covering_cost,
+        check_population_for_max_days_per_week=check_population_for_max_days_per_week,
+    ),
     # 'cpsat': CPSAT,
     # 'reinforcement_learning': ReingforcementLearningRNN,
 }
@@ -116,7 +135,6 @@ solution, solution_cost, states = algos[args.algo](problems[args.problem])
 print('solution:')
 print(solution)
 print('solution_cost:', solution_cost)
-
 
 
 # if __name__ == '__main__':
