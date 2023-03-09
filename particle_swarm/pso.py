@@ -282,5 +282,4 @@ class ParticleSwarmOptimization:
             )
             states.append(gbest_cost)
 
-        print('swarm:', pcurrent)
         return gbest, gbest_cost, states
