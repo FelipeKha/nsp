@@ -1,7 +1,7 @@
 import argparse
 import matplotlib.pyplot as plt
 
-# from google_cp_sat.cp_sat import CPSAT
+from google_cp_sat.cp_sat import CPSAT
 from genetic_algo.genetic_algo import GeneticAlgo
 from particle_swarm.pso import ParticleSwarmOptimization
 from problem_setup.problem import Problem
@@ -40,6 +40,7 @@ parser.add_argument(
         'simulated_annealing',
         'particle_swarm_optimization',
         'reinforcement_learning',
+        'cp_sat',
     ],
     help='algorithm to use',
 )
@@ -112,7 +113,7 @@ algos = {
         covering_cost=covering_cost,
         check_population_for_max_days_per_week=check_population_for_max_days_per_week,
     ),
-    # 'cpsat': CPSAT,
+    'cp_sat': CPSAT(),
     # 'reinforcement_learning': ReingforcementLearningRNN,
 }
 

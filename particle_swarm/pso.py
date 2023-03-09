@@ -284,11 +284,3 @@ class ParticleSwarmOptimization:
 
         print('swarm:', pcurrent)
         return gbest, gbest_cost, states
-
-    # def search_solution(self) -> tuple[np.ndarray, int, list]:
-    #     initial_swarm = \
-    #         self.get_population.get_initial_population(self.swarm_size)
-    #     best_solution, best_cost, states = \
-    #         self.particle_swarm_optimization(initial_swarm)
-        
-    #     return best_solution, best_cost, states
