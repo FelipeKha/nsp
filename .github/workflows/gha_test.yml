@@ -1,0 +1,32 @@
+name: GitHub Actions Test
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout files
+        uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Create and activate virtual environment
+        run: |
+          python3.8 -m venv env
+          source env/bin/activate
+          echo "VIRTUAL ENV:" $VIRTUAL_ENV
+          which python3
+      - name: Install dependencies
+        run: | 
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          pytest --verbose
