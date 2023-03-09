@@ -71,7 +71,6 @@ class TabuSearch:
 
         for iter in range(self.nb_iter):
             print('iter', iter)
-            # reduce counter for all tabu
             for sol in tabu_history:
                 tabu_history[sol] -= 1
             tabu_history = {
@@ -89,12 +88,3 @@ class TabuSearch:
                 best_solution_cost = best_neighbour_cost
             states.append(best_neighbour_cost)
         return best_solution, best_solution_cost, states
-
-    # def search_solution(self) -> np.ndarray:
-    #     # get initial random solution
-    #     initial_solution = self.get_population.get_random_initial_solution()
-
-    #     # tabu search
-    #     # tabu list, in type dictionary (solution: nb of remaining iter in tabu list)
-    #     solution, solution_cost, states = self.tabu_search(initial_solution)
-    #     return solution, solution_cost, states
