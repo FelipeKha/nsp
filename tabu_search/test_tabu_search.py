@@ -3,26 +3,12 @@ import pytest
 
 from problem_setup.problem import Problem
 from tabu_search.tabu_search import TabuSearch
-from utils.covering_cost import CoveringCost
-from utils.get_neighbour import GetNeighbour
-from utils.get_population import GetPopulation
+from utils.covering_cost import covering_cost
+from utils.get_neighbour import get_neighbour_tabu
+from utils.get_population import get_random_initial_solution
 
 
 class TestTabuSearch:
-    @pytest.fixture
-    def covering_cost(self):
-        """
-        Returns a CoveringCost instance with:
-        - Work days: 7
-        - Shift per workday: 1
-        - Required nurses per shift: 2
-        """
-        return CoveringCost(
-            nb_work_days_per_week=7,
-            nb_shifts_per_work_day=1,
-            nb_nrs_per_shift=2,
-        )
-
     @pytest.fixture
     def problem(self):
         """
@@ -47,9 +33,9 @@ class TestTabuSearch:
             nb_iter=10,
             nb_neighbours=2,
             tabu_limit=10,
-            GetPopulation=GetPopulation,
-            GetNeighbour=GetNeighbour,
-            CoveringCost=CoveringCost,
+            get_random_initial_solution=get_random_initial_solution,
+            get_neighbour_tabu=get_neighbour_tabu,
+            covering_cost=covering_cost,
         )
 
     def is_solution(self, solution):
@@ -71,7 +57,7 @@ class TestTabuSearch:
     # tabu_search
     # return tuple of len 3
     def test_tabu_search_return_tuple_of_len_3(self, tabu_search, problem):
-        out = tabu_search(*problem())
+        out = tabu_search(problem)
         assert len(out) == 3
 
     # first element is a numpy array
@@ -80,7 +66,7 @@ class TestTabuSearch:
             tabu_search,
             problem,
     ):
-        out = tabu_search(*problem())
+        out = tabu_search(problem)
         assert type(out[0]) == np.ndarray
 
     # first element is a solution
@@ -89,7 +75,7 @@ class TestTabuSearch:
             tabu_search,
             problem
     ):
-        out = tabu_search(*problem())
+        out = tabu_search(problem)
         assert self.is_solution(out[0])
 
     # first element comply with the max work days per week constraint
@@ -98,12 +84,12 @@ class TestTabuSearch:
             tabu_search,
             problem,
     ):
-        out = tabu_search(*problem())
+        out = tabu_search(problem)
         assert out[0].sum(axis=1).max() <= 5
 
     # second element is of type np.int64
     def test_tabu_search_second_element_is_np_int64(self, tabu_search, problem):
-        out = tabu_search(*problem())
+        out = tabu_search(problem)
         assert type(out[1]) == np.int64
 
     # second element is the covering cost of the first element
@@ -111,14 +97,13 @@ class TestTabuSearch:
             self,
             tabu_search,
             problem,
-            covering_cost,
     ):
-        out = tabu_search(*problem())
-        assert out[1] == covering_cost.covering_cost(out[0])
+        out = tabu_search(problem)
+        assert out[1] == covering_cost(out[0], problem)
 
     # third element is a list
     def test_tabu_search_third_element_is_a_list(self, tabu_search, problem):
-        out = tabu_search(*problem())
+        out = tabu_search(problem)
         assert type(out[2]) == list
 
     # third element is a list of np.int64 or np.inf
@@ -127,7 +112,7 @@ class TestTabuSearch:
             tabu_search,
             problem,
     ):
-        out = tabu_search(*problem())
+        out = tabu_search(problem)
         print('type out[2][0]', type(out[2][0]))
         for i in out[2]:
             print('type:', type(i), 'value:', i)
@@ -139,5 +124,70 @@ class TestTabuSearch:
             tabu_search,
             problem,
     ):
-        out = tabu_search(*problem())
+        out = tabu_search(problem)
+        assert all(x >= 0 for x in out[2])
+
+    # __call__
+    # return tuple of len 3
+    def test_search_solution_return_tuple_of_len_3(self, tabu_search, problem):
+        out = tabu_search(problem)
+        assert len(out) == 3
+
+    # first element is a numpy array
+    def test_search_solution_first_element_is_a_numpy_array(self, tabu_search, problem):
+        out = tabu_search(problem)
+        assert type(out[0]) == np.ndarray
+
+    # first element is a solution
+    def test_search_solution_first_element_is_a_solution(self, tabu_search, problem):
+        out = tabu_search(problem)
+        assert self.is_solution(out[0])
+
+    # first element comply with the max work days per week constraint
+    def test_search_solution_first_element_comply_max_work_days_per_week(
+            self,
+            tabu_search,
+            problem,
+    ):
+        out = tabu_search(problem)
+        assert out[0].sum(axis=1).max() <= 5
+
+    # second element is of type np.int64
+    def test_search_solution_second_element_is_np_int64(self, tabu_search, problem):
+        out = tabu_search(problem)
+        assert type(out[1]) == np.int64
+
+    # second element is the covering cost of the first element
+    def test_search_solution_second_element_is_covering_cost_of_first_element(
+            self,
+            tabu_search,
+            problem,
+    ):
+        out = tabu_search(problem)
+        assert out[1] == covering_cost(out[0], problem)
+
+    # third element is a list
+    def test_search_solution_third_element_is_a_list(self, tabu_search, problem):
+        out = tabu_search(problem)
+        assert type(out[2]) == list
+
+    # third element is a list of np.int64 or np.inf
+    def test_search_solution_third_element_is_a_list_of_np_int64(
+            self,
+            tabu_search, 
+            problem,
+    ):
+        out = tabu_search(problem)
+        print('type out[2][0]', type(out[2][0]))
+        for i in out[2]:
+            print('type:', type(i), 'value:', i)
+        assert all(type(x) == np.int64 or x == np.inf for x in out[2])
+
+    # third element items are all greater than or equal to 0
+    def test_search_solution_third_element_items_are_greater_than_or_equal_to_0(
+            self,
+            tabu_search, 
+            problem,
+    ):
+        out = tabu_search(problem)
         assert all(x >= 0 for x in out[2])

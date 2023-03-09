@@ -1,9 +1,6 @@
 import numpy as np
 
-from utils.covering_cost import CoveringCost
-from utils.get_neighbour import GetNeighbour
-from utils.get_population import GetPopulation
-
+from problem_setup.problem import Problem
 
 class TabuSearch:
     def __init__(
@@ -11,61 +8,36 @@ class TabuSearch:
         nb_iter: int,
         nb_neighbours: int,
         tabu_limit: int,
-        GetPopulation: GetPopulation,
-        GetNeighbour: GetNeighbour,
-        CoveringCost: CoveringCost,
+        get_random_initial_solution: callable,
+        get_neighbour_tabu: callable,
+        covering_cost: callable,
     ) -> None:
         self.nb_iter = nb_iter
         self.nb_neighbours = nb_neighbours
         self.tabu_limit = tabu_limit
-        self.GetPopulation = GetPopulation
-        self.GetNeighbour = GetNeighbour
-        self.CoveringCost = CoveringCost
+        self.get_random_initial_solution = get_random_initial_solution
+        self.get_neighbour_tabu = get_neighbour_tabu
+        self.covering_cost = covering_cost
 
     def __call__(
             self,
-            nb_nurses: int,
-            nb_work_days_per_week: int,
-            nb_shifts_per_work_day: int,
-            nb_nrs_per_shift: int,
-            nrs_max_work_days_per_week: int,
+            problem: Problem,
     ) -> tuple[np.ndarray, int, list]:
-        covering_cost = self.CoveringCost(
-            nb_work_days_per_week,
-            nb_shifts_per_work_day,
-            nb_nrs_per_shift,
-        )
-        get_neighbour = self.GetNeighbour(
-            nb_nurses,
-            nb_work_days_per_week,
-            nb_shifts_per_work_day,
-            nrs_max_work_days_per_week,
-            covering_cost,
-        )
-        get_population = self.GetPopulation(
-            nb_nurses,
-            nb_work_days_per_week,
-            nb_shifts_per_work_day,
-            nrs_max_work_days_per_week,
-        )
-
-        initial_solution = get_population.get_random_initial_solution()
+        initial_solution = self.get_random_initial_solution(problem)
         solution, solution_cost, states = self.tabu_search(
             initial_solution,
-            covering_cost,
-            get_neighbour,
-        )
+            problem,
+            )
         self.out = (solution, solution_cost, states)
         return self.out
 
     def tabu_search(
         self,
         initial_solution: np.ndarray,
-        covering_cost: CoveringCost,
-        get_neighbour: GetNeighbour,
+        problem: Problem,
     ) -> tuple[np.ndarray, int, list]:
         best_solution = initial_solution
-        best_solution_cost = covering_cost.covering_cost(best_solution)
+        best_solution_cost = self.covering_cost(best_solution, problem)
         states = [best_solution_cost]  # to plot costs through the algo
         tabu_history = {}
 
@@ -77,11 +49,13 @@ class TabuSearch:
                 sol: tabu_history[sol] for sol in tabu_history if tabu_history[sol] > 0
             }
             best_neighbour, best_neighbour_cost, tabu_history = \
-                get_neighbour.get_neighbour_tabu(
+                self.get_neighbour_tabu(
                     best_solution,
+                    problem,
                     self.nb_neighbours,
                     tabu_history,
                     self.tabu_limit,
+                    self.covering_cost,
                 )
             if best_neighbour_cost <= best_solution_cost:
                 best_solution = best_neighbour

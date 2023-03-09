@@ -1,18 +1,20 @@
 import argparse
 import matplotlib.pyplot as plt
 
-from google_cp_sat.cp_sat import CPSAT
+# from google_cp_sat.cp_sat import CPSAT
 from genetic_algo.genetic_algo import GeneticAlgo
-from particle_swarm.pso import ParticleSwarmOptimization
+# from particle_swarm.pso import ParticleSwarmOptimization
 from problem_setup.problem import Problem
 # from reinforcement_learning.rf_rnn import ReingforcementLearningRNN
-from simulated_annealing.sim_anneal import SimulatedAnnealing
+# from simulated_annealing.sim_anneal import SimulatedAnnealing
 from tabu_search.tabu_search import TabuSearch
-from utils.check_constraints import CheckConstraints
-from utils.covering_cost import CoveringCost
-from utils.get_neighbour import GetNeighbour
-from utils.get_population import GetPopulation
-from validation import Validation
+# from utils.check_constraints import CheckConstraints
+from utils.covering_cost import covering_cost
+from utils.get_neighbour import get_neighbour_tabu
+from utils.get_population import \
+    get_random_initial_solution, \
+        get_initial_population
+# from validation import Validation
 
 parser = argparse.ArgumentParser(
     prog='nurse_rostering',
@@ -34,7 +36,7 @@ parser.add_argument(
     default='tabu_search',
     choices=[
         'tabu_search',
-        'genetic_algo',
+        'genetic',
         'simulated_annealing',
         'particle_swarm_optimization',
         'reinforcement_learning',
@@ -76,17 +78,22 @@ algos = {
         nb_iter=1000,
         nb_neighbours=10,
         tabu_limit=10,
-        # get_random_initial_solution=get_random_initial_solution,
-        # get_neighbour_tabu=get_neighbour_tabu,
-        # covering_cost=covering_cost,
-        GetPopulation= GetPopulation,
-        GetNeighbour= GetNeighbour,
-        CoveringCost= CoveringCost,
+        get_random_initial_solution=get_random_initial_solution,
+        get_neighbour_tabu=get_neighbour_tabu,
+        covering_cost=covering_cost,
     ),
-    'genetic_algo': GeneticAlgo,
-    'simulated_annealing': SimulatedAnnealing,
-    'particle_swarm_optimization': ParticleSwarmOptimization,
-    'cpsat': CPSAT,
+    'genetic': GeneticAlgo(
+        nb_gen=1000,
+        pop_size=100,
+        nb_parents_mating=2,
+        crossover_prob=0.7,
+        mutation_prob=0.3,
+        get_initial_population=get_initial_population,
+        covering_cost=covering_cost,
+    ),
+    # 'simulated_annealing': SimulatedAnnealing,
+    # 'particle_swarm_optimization': ParticleSwarmOptimization,
+    # 'cpsat': CPSAT,
     # 'reinforcement_learning': ReingforcementLearningRNN,
 }
 
@@ -104,7 +111,7 @@ algos = {
 
 print(problems[args.problem]())
 
-solution, solution_cost, states = algos[args.algo](*problems[args.problem]())
+solution, solution_cost, states = algos[args.algo](problems[args.problem])
 
 print('solution:')
 print(solution)
