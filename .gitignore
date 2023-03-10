@@ -1,6 +1,7 @@
 # Files
 .DS_Store
 playground.ipynb
+try.py
 
 # Folders
 __pycache__/

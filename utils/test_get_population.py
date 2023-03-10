@@ -1,50 +1,52 @@
 import numpy as np
 import pytest
 
-from utils.get_population import GetPopulation
+from problem_setup.problem import Problem
+from utils.get_population import \
+    get_random_nurse_schedule, \
+        get_random_initial_solution, \
+            get_initial_population
 
 class TestGetPopulation:
-    # nb_nurses=4
-    # nb_work_days_per_week=7
-    # nb_shifts_per_work_day=1
-    # nrs_max_work_days_per_week=5
 
     @pytest.fixture
-    def get_population(self):
+    def problem(self):
         """
-        Returns a GetPopulation instance with:
-        - Nurses: 4
+        Returns a Problem instance with:
+        - Nb nurses: 4
         - Work days: 7
         - Shift per workday: 1
+        - Required nurses per shift: 2
         - Max work days per week: 5
         """
-        return GetPopulation(
+        return Problem(
             nb_nurses=4,
             nb_work_days_per_week=7,
             nb_shifts_per_work_day=1,
+            target_nb_nrs_per_shift=2,
             nrs_max_work_days_per_week=5,
         )
 
     @pytest.fixture
-    def nurse_schedule(self, get_population):
+    def nurse_schedule(self, problem):
         """
         Returns a random nurse schedule.
         """
-        return get_population.get_random_nurse_schedule()
+        return get_random_nurse_schedule(problem)
     
     @pytest.fixture
-    def solution(self, get_population):
+    def solution(self, problem):
         """
         Returns a random solution.
         """
-        return get_population.get_random_initial_solution()
+        return get_random_initial_solution(problem)
     
     @pytest.fixture
-    def population(self, get_population):
+    def population(self, problem):
         """
         Returns a random population of 10 solutions.
         """
-        return get_population.get_initial_population(10)
+        return get_initial_population(10, problem)
 
     # get_random_nurse_schedule
     def test_get_random_nurse_schedule_returns_ndarray(self, nurse_schedule):
