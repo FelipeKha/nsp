@@ -6,6 +6,8 @@ from tabu_search.tabu_search import TabuSearch
 from utils.covering_cost import covering_cost
 from utils.get_neighbour import get_neighbour_tabu
 from utils.get_population import get_random_initial_solution
+from utils.iter_next import IterNext
+from validation import Validation
 
 
 class TestTabuSearch:
@@ -29,6 +31,17 @@ class TestTabuSearch:
 
     @pytest.fixture
     def tabu_search(self):
+        validation = Validation()
+        iter_next = IterNext(
+            nb_iter_max=10,
+            zero_cost=True,
+            validation=True,
+            zero_cost_max=0,
+            mean_hist_cost=[0, 1.0],
+            check_every=1,
+        )
+
+
         return TabuSearch(
             nb_iter=10,
             nb_neighbours=2,
@@ -36,6 +49,8 @@ class TestTabuSearch:
             get_random_initial_solution=get_random_initial_solution,
             get_neighbour_tabu=get_neighbour_tabu,
             covering_cost=covering_cost,
+            validation=validation,
+            iter_next=iter_next,
         )
 
     def is_solution(self, solution):
@@ -55,10 +70,10 @@ class TestTabuSearch:
         return True
 
     # tabu_search
-    # return tuple of len 3
+    # return tuple of len 6
     def test_tabu_search_return_tuple_of_len_3(self, tabu_search, problem):
         out = tabu_search(problem)
-        assert len(out) == 3
+        assert len(out) == 6
 
     # first element is a numpy array
     def test_tabu_search_first_element_is_a_numpy_array(
@@ -128,10 +143,10 @@ class TestTabuSearch:
         assert all(x >= 0 for x in out[2])
 
     # __call__
-    # return tuple of len 3
+    # return tuple of len 6
     def test_call_return_tuple_of_len_3(self, tabu_search, problem):
         out = tabu_search(problem)
-        assert len(out) == 3
+        assert len(out) == 6
 
     # first element is a numpy array
     def test_call_first_element_is_a_numpy_array(self, tabu_search, problem):
