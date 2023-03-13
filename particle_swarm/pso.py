@@ -1,46 +1,48 @@
 import numpy as np
 
-from utils.check_constraints import CheckConstraints
-from utils.covering_cost import CoveringCost
-from utils.get_population import GetPopulation
+from problem_setup.problem import Problem
 
 
 class ParticleSwarmOptimization:
     def __init__(
             self,
-            nb_nurses: int,
-            nb_work_days_per_week: int,
-            nb_shifts_per_work_day: int,
-            nb_nrs_per_shift: int,
-            nrs_max_work_days_per_week: int,
             swarm_size: int,
             max_iter: int,
             c1: float,
             c2: float,
             w: float,
             alpha: float,
-            get_population: GetPopulation,
-            covering_cost: CoveringCost,
-            check_constraints: CheckConstraints,
+            get_initial_population: callable,
+            covering_cost: callable,
+            check_population_for_max_days_per_week: callable,
     ) -> None:
-        self.nb_nurses = nb_nurses
-        self.nb_work_days_per_week = nb_work_days_per_week
-        self.nb_shifts_per_work_day = nb_shifts_per_work_day
-        self.nb_nrs_per_shift = nb_nrs_per_shift
-        self.nrs_max_work_days_per_week = nrs_max_work_days_per_week
         self.swarm_size = swarm_size
         self.max_iter = max_iter
         self.c1 = c1
         self.c2 = c2
         self.w = w
         self.alpha = alpha
-        self.get_population = get_population
+        self.get_initial_population = get_initial_population
         self.covering_cost = covering_cost
-        self.check_constraints = check_constraints
+        self.check_population_for_max_days_per_week = (
+            check_population_for_max_days_per_week
+        )
+
+    def __call__(
+            self,
+            problem: Problem,
+    ) -> tuple[np.ndarray, int, list]:
+        initial_swarm = \
+            self.get_initial_population(self.swarm_size, problem)
+        best_solution, best_cost, states = \
+            self.particle_swarm_optimization(initial_swarm, problem)
+        
+        return best_solution, best_cost, states
 
     def get_pop_costs(
             self,
             swarm: np.ndarray,
+            problem: Problem,
     ) -> np.ndarray:
         """
         Given a swarm of dim (swarm_size, nb_nurses, nb_shifts), returns the 
@@ -48,7 +50,7 @@ class ParticleSwarmOptimization:
         """
         costs = np.empty(self.swarm_size, dtype=int)
         for i in range(self.swarm_size):
-            costs[i] = self.covering_cost.covering_cost(swarm[i])
+            costs[i] = self.covering_cost(swarm[i], problem)
         return costs
 
     def ycompare_func(
@@ -241,9 +243,10 @@ class ParticleSwarmOptimization:
     def particle_swarm_optimization(
             self,
             initial_swarm: np.ndarray,
+            problem: Problem,
     ) -> tuple[np.ndarray, int, list]:
         pcurrent = initial_swarm              # current swarm of particles (swarm_size, nb_nurses, nb_shifts)
-        pcurrent_costs = self.get_pop_costs(pcurrent) # costs of current particles (swarm_size)
+        pcurrent_costs = self.get_pop_costs(pcurrent, problem) # costs of current particles (swarm_size)
         pbest = pcurrent                      # historical best particles for each particle (swarm_size, nb_nurses, nb_shifts)
         pbest_costs = pcurrent_costs
         gbest_index = np.argmin(pcurrent_costs)       # index of best particle of the swarm
@@ -260,12 +263,11 @@ class ParticleSwarmOptimization:
             ylambda = ycompare + v
             yupdate = self.get_yupdate(ylambda)
             pcurrent = self.update_swarm(yupdate, pbest, gbest)
-            pcurrent = self.check_constraints.check_population_for_max_days_per_week(
+            pcurrent = self.check_population_for_max_days_per_week(
                 pcurrent,
-                self.nb_nrs_per_shift,
-                self.nrs_max_work_days_per_week,
+                problem,
             )
-            pcurrent_costs = self.get_pop_costs(pcurrent)
+            pcurrent_costs = self.get_pop_costs(pcurrent, problem)
             pbest, pbest_costs = self.update_pbest(
                 pcurrent, 
                 pcurrent_costs, 
@@ -280,13 +282,4 @@ class ParticleSwarmOptimization:
             )
             states.append(gbest_cost)
 
-        print('swarm:', pcurrent)
         return gbest, gbest_cost, states
-
-    def search_solution(self) -> tuple[np.ndarray, int, list]:
-        initial_swarm = \
-            self.get_population.get_initial_population(self.swarm_size)
-        best_solution, best_cost, states = \
-            self.particle_swarm_optimization(initial_swarm)
-        
-        return best_solution, best_cost, states
